@@ -24,25 +24,24 @@ export class RedisEvents {
     } else console.log(m)
   }
 
-  public static okEvent() {
-    RedisEvents.client.publish(RedisEvents.channel, 'OK')
-    RedisEvents.log(`Publish OK on ${RedisEvents.channel}`)
+  private static publish(ev: string) {
+    RedisEvents.client.publish(RedisEvents.channel, ev)
+    RedisEvents.log(`Publish ${ev} on ${RedisEvents.channel}`)
   }
 
-  public static errorEvent() {
-    RedisEvents.client.publish(RedisEvents.channel, 'ERROR')
-    RedisEvents.log(`Publish ERROR on ${RedisEvents.channel}`)
+  public static startupSuccess() {
+    this.publish('STARTUP-SUCCESS')
+  }
+
+  public static startupError() {
+    this.publish('STARTUP-ERROR')
+  }
+
+  public static runDone(runId: string) {
+    this.publish(`RUN-DONE ${runId}`)
   }
 
   public static quit() {
     RedisEvents.client.quit()
   }
 }
-
-RedisEvents.client.monitor((err, res) => {
-  console.log('Redis client entered monitor mode')
-})
-
-RedisEvents.client.on('monitor', (time, args, raw_reply) => {
-  console.log(`[redis monitor] ${time}: ${args}`)
-})
