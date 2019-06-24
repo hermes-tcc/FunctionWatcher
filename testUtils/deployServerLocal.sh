@@ -1,17 +1,47 @@
-set -euxo pipefail
+display_usage() { 
+  echo -e "\nUsage: ./deployServerLocal FN_PATH\n" 
+} 
 
-docker build  -t tiagonapoli/function-builder \
-              -f ../../ProjectBuilderImages/cuda.Dockerfile \
-              $1
+if [  $# -le 0 ] 
+then 
+  display_usage
+  exit 1
+fi 
 
-docker build  -t tiagonapoli/function-watcher-cuda-base \
-              -f ../../FunctionWatcher/baseImages/cuda.Dockerfile \
-              ../../FunctionWatcher/
+set -euo pipefail
 
-docker build  -t tiagonapoli/$2_watcher \
-              --target=dev \
-              --build-arg FUNCTION_BUILDER_IMAGE=tiagonapoli/function-builder \
-              --build-arg FUNCTION_WATCHER_BASE=tiagonapoli/function-watcher-cuda-base \
-              ../../FunctionWatcher/
+HERMES_CONFIG_PATH="$1/hermes.config.json"
+FN_NAME=$( cat $HERMES_CONFIG_PATH | python -c "import json,sys;obj=json.load(sys.stdin);print obj['functionName'];")
+LANGUAGE=$( cat $HERMES_CONFIG_PATH | python -c "import json,sys;obj=json.load(sys.stdin);print obj['language'];")
+FN_BUILDER_DOCKERFILE=$( curl https://raw.githubusercontent.com/hermes-tcc/project-building-base-images/master/$LANGUAGE.Dockerfile )
 
-docker run -it --rm -p 8888:8888 -e PORT=8888 -e DEBUG=true --name=$2-test-watcher tiagonapoli/$2_watcher 
+echo "======== BUILDING FUNCTION ========"
+echo "$FN_BUILDER_DOCKERFILE" | \
+  docker build  -t tiagonapoli/build-$FN_NAME \
+                -f - \
+                $1
+echo ""
+echo ""
+
+echo "======== BUILDING WATCHER ========"
+docker build  -t tiagonapoli/watcher-$FN_NAME \
+              --target=development \
+              --build-arg FN_IMAGE=tiagonapoli/build-$FN_NAME \
+              --build-arg FN_LANGUAGE=$LANGUAGE \
+              ../
+echo ""
+echo ""
+
+
+cd ../
+SRC_PATH="$(pwd)"
+cd testUtils
+
+docker run -it --rm \
+  -p 8888:8888 \
+  -e PORT=8888 \
+  -e DEBUG=true \
+  -e REDIS_CHANNEL=debug-channel \
+  --name=$FN_NAME-test-watcher \
+  --mount type=bind,source=$SRC_PATH,target=/app/server \
+  tiagonapoli/watcher-$FN_NAME
