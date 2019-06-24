@@ -1,7 +1,12 @@
 .vscode
 node_modules
 build
-baseImages
+watcherBase
+testUtils
+
 .gitignore
-docker-compose.yml
+.dockerignore
+
 Dockerfile
+prettier.config.js
+tslint.json
