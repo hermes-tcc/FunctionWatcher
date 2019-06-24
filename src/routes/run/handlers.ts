@@ -110,7 +110,7 @@ export const resultHandler = async (req: ReqWithRun, res: Response, next: NextFu
       if (!req.run.isReportReady()) throw new ReportNotReady(id)
       res.sendFile(getIOPath(id, 'rep'))
     } else {
-      res.status(405).send('This route only accepts GET and DELETE requests')
+      res.status(405).send('This route only accepts GET requests')
     }
   } catch (err) {
     next(err)
