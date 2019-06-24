@@ -1,57 +1,58 @@
-ARG FUNCTION_BUILDER_IMAGE 
-ARG FUNCTION_WATCHER_BASE
-FROM ${FUNCTION_BUILDER_IMAGE} as build
+ARG FN_IMAGE 
+ARG FN_LANGUAGE
+FROM ${FN_IMAGE} as function
 
-###################################################
+# ================ COMMON ================
 
-FROM ${FUNCTION_WATCHER_BASE} as dev 
+FROM hermeshub/watcher-base-${FN_LANGUAGE} as common 
 
-ENV PORT 8080
-
-EXPOSE ${PORT}
+RUN mkdir -p /app/server && \
+  mkdir -p /app/function && \
+  mkdir -p /app/io/in && \
+  mkdir -p /app/io/out && \
+  mkdir -p /app/io/err && \
+  mkdir -p /app/io/rep
 
 WORKDIR /app/server
 
-ENV NODE_ENV=development
-
 COPY package.json yarn.lock ./
+
+# ================ DEVELOPMENT ================
+
+FROM common as development 
+
+ENV NODE_ENV=development
 
 RUN yarn
 
 COPY . .
 
-COPY --from=build /function /app/function
-
-ARG FUNCTION_HANDLER
-
-ENV FUNCTION_HANDLER ${FUNCTION_HANDLER}
-
-RUN yarn tsc
+COPY --from=function /function /app/function
 
 CMD [ "yarn", "nodemon" ]
 
-###################################################
+# ================ PRODUCTION-BASE ================
 
-FROM ${FUNCTION_WATCHER_BASE} as prod 
+FROM common as production-base
 
-ENV PORT 8080
-
-EXPOSE ${PORT}
-
-WORKDIR /app/server
-
-ENV NODE_ENV=production
-
-COPY package.json yarn.lock ./
+ENV NODE_ENV=development
 
 RUN yarn
 
-COPY --from=dev /app/server/build /app/server
+COPY . .
 
-COPY --from=build /function /app/function
+RUN yarn tsc
 
-ARG FUNCTION_HANDLER
+# ================ PRODUCTION ================
 
-ENV FUNCTION_HANDLER ${FUNCTION_HANDLER}
+FROM common as production 
+
+ENV NODE_ENV=production
+
+RUN yarn
+
+COPY --from=production-base /app/server/build /app/server
+
+COPY --from=function /function /app/function
 
 CMD [ "yarn", "start:prod" ]
