@@ -74,7 +74,7 @@ export const runHandler = async (req: ReqWithRunArgs, res: Response, next: NextF
     if (runExists) throw new RunIdAlreadyExists(req.runArgs.runId)
     const runRequest = new Runner(req.runArgs)
     const { startTime } = runRequest.start()
-    res.status(200).send({ startTime })
+    res.status(200).send({ startTime, runId: req.runArgs.runId })
   } catch (err) {
     next(err)
   }
