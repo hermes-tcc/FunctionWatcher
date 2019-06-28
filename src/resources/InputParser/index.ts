@@ -1,6 +1,7 @@
 import Busboy from 'busboy'
 import { Request } from 'express'
 import onFinished from 'on-finished'
+import R from 'ramda'
 import { Readable } from 'stream'
 import {
   FieldnameSizeExceeded,
@@ -13,7 +14,12 @@ import {
 import { TimedWaiter, Waiter } from '../../utils/CustomPromises'
 import { Logger } from '../../utils/Logger'
 import { StringStream } from '../StringStream'
-import { BusboyLimits, FileInfo, ReadableWithTruncatedFlag } from './../../typings.d'
+import {
+  BusboyLimits,
+  FieldToPersist,
+  FileInfo,
+  ReadableWithTruncatedFlag,
+} from './../../typings.d'
 import { FileUploader } from './FileUploader'
 import { HandlersManager } from './HandlersManager'
 
@@ -38,6 +44,7 @@ const drainStream = (stream: Readable) => {
 
 export class InputParser {
   private busboyLimits: BusboyLimits
+  private partsToPersist: FieldToPersist[]
 
   private req: Request
   private busboy: busboy.Busboy
@@ -57,9 +64,11 @@ export class InputParser {
     req: Request,
     { limits }: busboy.BusboyConfig,
     uploadPath: string,
+    partsToPersist: FieldToPersist[],
     maxFinishTime?: number
   ) {
     this.req = req
+    this.partsToPersist = partsToPersist
 
     this.busboyLimits = {
       fieldNameSize: 100,
@@ -155,7 +164,11 @@ export class InputParser {
       const { fieldname, fileStream, val, valTruncated, nameTruncated } = input
       const { fileSize, fieldNameSize } = this.busboyLimits
 
-      if (this.abortFlag) return fileStream && fileStream.resume()
+      const fileToPersist = R.find(el => fieldname === el.fieldname, this.partsToPersist)
+      if (this.abortFlag || fileToPersist == null) {
+        return fileStream && fileStream.resume()
+      }
+
       this.handlersManager.incrementPendingHandler()
       Logger.info('[InputParser] handler', {
         fieldname,
@@ -171,7 +184,7 @@ export class InputParser {
         if (fieldname.length > fieldNameSize) throw new FieldnameSizeExceeded(fieldNameSize)
 
         const stream = fileStream || new StringStream(val)
-        const fileInfo = await this.fileUploader.uploadFile(fieldname, stream)
+        const fileInfo = await this.fileUploader.uploadFile(fileToPersist.filename, stream)
         Logger.info('[InputParser][handler] File Uploaded', fileInfo)
 
         this.handlersManager.decrementPendingHandler()

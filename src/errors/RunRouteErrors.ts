@@ -57,7 +57,7 @@ export class MissingInputField extends RouteError {
     super({
       errorName: 'MissingInputField',
       message:
-        'Missing input field in the body: Format should be $runId: string. If there is no input string should be empty',
+        'Missing input field in the body: Format should be $input: [string or file]. If there is no input string should be empty',
       statusCode: 400,
     })
   }

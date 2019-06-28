@@ -12,7 +12,7 @@ import {
   ReportNotReady,
   RunIdAlreadyExists,
 } from './../../errors/RunRouteErrors'
-import { BusboyLimits, FileInfo } from './../../typings.d'
+import { BusboyLimits, FileInfo, FieldToPersist } from './../../typings.d'
 
 const KILOBYTE = 1024
 const MEGABYTE = 1024 * KILOBYTE
@@ -48,7 +48,14 @@ export const parseInput = async (req: ReqWithRunArgs, res: Response, next: NextF
         fileSize: MAX_FILE_SIZE,
       }
 
-      const inputParser = new InputParser(req, { limits }, getInBasePath())
+      const partsToPersist: FieldToPersist[] = [
+        {
+          fieldname: 'input',
+          filename: req.params.runId,
+        },
+      ]
+
+      const inputParser = new InputParser(req, { limits }, getInBasePath(), partsToPersist)
       const inputFileArr = await inputParser.parse()
       Logger.info('[parseInput]', { inputFileArr: util.inspect(inputFileArr) })
       req.runArgs = await getRunInput(inputFileArr)
