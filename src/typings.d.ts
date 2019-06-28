@@ -17,3 +17,8 @@ export interface FileInfo {
   path: string
   size: number
 }
+
+export interface FieldToPersist {
+  fieldname: string
+  filename: string
+}
