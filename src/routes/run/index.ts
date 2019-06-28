@@ -3,6 +3,8 @@ import { Router } from 'express'
 
 export const runRoute = Router()
 
-runRoute.all('/', [parseInput, runHandler])
-runRoute.all('/:runId', [writeRunOnReq, statusHandler])
+runRoute.post('/:runId', [parseInput, runHandler])
+runRoute.get('/:runId', [writeRunOnReq, statusHandler])
+runRoute.delete('/:runId', [writeRunOnReq, statusHandler])
+
 runRoute.all('/:runId/result', [writeRunOnReq, resultHandler])
