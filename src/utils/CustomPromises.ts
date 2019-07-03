@@ -54,7 +54,7 @@ export class Waiter<T> {
     return this.done
   }
 
-  public then = (onFulfilled: (...args: any) => any, onRejected?: (...args: any) => any) => {
+  public then = (onFulfilled: (...args: any) => any, onRejected: (...args: any) => any) => {
     this.promise.then(onFulfilled, onRejected)
   }
 }
