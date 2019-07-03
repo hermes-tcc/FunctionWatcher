@@ -14,6 +14,7 @@ import {
 import { TimedWaiter, Waiter } from '../../utils/CustomPromises'
 import { Logger } from '../../utils/Logger'
 import { StringStream } from '../StringStream'
+import { MAX_BUSBOY_FINISH_TIME } from './../../limits/index'
 import {
   BusboyLimits,
   FieldToPersist,
@@ -34,9 +35,6 @@ interface InputToParse {
   valTruncated?: boolean
   nameTruncated?: boolean
 }
-
-const SECOND = 1000
-const DEFAULT_MAX_BUSBOY_FINISH_TIME = 120 * SECOND
 
 const drainStream = (stream: Readable) => {
   stream.on('readable', stream.read.bind(stream))
@@ -82,7 +80,7 @@ export class InputParser {
 
     this.errors = []
 
-    const maxTime = maxFinishTime ? maxFinishTime : DEFAULT_MAX_BUSBOY_FINISH_TIME
+    const maxTime = maxFinishTime ? maxFinishTime : MAX_BUSBOY_FINISH_TIME
     this.finishBusboy = new TimedWaiter(maxTime)
     this.finishParsing = new Waiter()
 

@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { FileSizeExceeded, RunIdAlreadyExists } from '../../errors/RunRouteErrors'
+import { FileSizeExceeded, RunIDAlreadyExists } from '../../errors/RunRouteErrors'
 import { Waiter } from '../../utils/CustomPromises'
 import { Logger } from '../../utils/Logger'
 import { FileInfo, ReadableWithTruncatedFlag } from './../../typings.d'
@@ -47,7 +47,7 @@ export class FileUploader {
   ): Promise<FileInfo> => {
     const filePath = path.join(this.basePath, filename)
     const fileExistsFlag = await fileExists(filePath)
-    if (fileExistsFlag) throw new RunIdAlreadyExists(filename)
+    if (fileExistsFlag) throw new RunIDAlreadyExists(filename)
 
     this.pendingFiles.increment()
     this.uploadedFiles.push(filePath)

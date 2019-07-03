@@ -25,9 +25,9 @@ export class FileSizeExceeded extends Error {
   }
 }
 
-export class RunIdAlreadyExists extends Error {
-  constructor(runId: string) {
-    super(`RunId ${runId} already exists`)
+export class RunIDAlreadyExists extends Error {
+  constructor(runID: string) {
+    super(`RunID ${runID} already exists`)
   }
 }
 
@@ -74,31 +74,41 @@ export class NoSuchRun extends RouteError {
 }
 
 export class ProcessNotFinished extends RouteError {
-  constructor(runId: string) {
+  constructor(runID: string) {
     super({
       errorName: 'ProcessNotFinished',
-      message: `The run ${runId} is not finished yet`,
+      message: `The run ${runID} is not finished yet`,
       statusCode: 409,
     })
   }
 }
 
 export class ReportNotReady extends RouteError {
-  constructor(runId: string) {
+  constructor(runID: string) {
     super({
       errorName: 'ReportNotReady',
-      message: `The report for run ${runId} is not ready yet`,
+      message: `The report for run ${runID} is not ready yet`,
       statusCode: 409,
     })
   }
 }
 
 export class RunsLimitReached extends RouteError {
-  constructor() {
+  constructor(limit: number) {
     super({
       errorName: 'RunsLimitReached',
-      message: 'Runs limit reached for this server',
+      message: `Runs limit[${limit}] reached for this server`,
       statusCode: 400,
+    })
+  }
+}
+
+export class RunBeingDeleted extends RouteError {
+  constructor(id: string) {
+    super({
+      errorName: 'RunBeingDeleted',
+      message: `Run ${id} is in delete process`,
+      statusCode: 409,
     })
   }
 }

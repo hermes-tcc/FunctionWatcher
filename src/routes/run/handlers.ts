@@ -1,64 +1,49 @@
 import { NextFunction, Request, Response } from 'express'
-import { Readable } from 'stream'
 import util from 'util'
 import { InputParser } from '../../resources/InputParser'
 import { Runner } from '../../resources/Runner'
+import { Run } from '../../resources/Runner/Run'
+import { getInBasePath } from '../../resources/Runner/RunFileManager'
 import { Logger } from '../../utils/Logger'
-import { createRunnerReadStream, getInBasePath, getIOPath } from '../../utils/runner'
 import {
   MissingInputField,
   NoSuchRun,
   ProcessNotFinished,
   ReportNotReady,
-  RunIdAlreadyExists,
+  RunIDAlreadyExists,
 } from './../../errors/RunRouteErrors'
-import { BusboyLimits, FileInfo, FieldToPersist } from './../../typings.d'
+import { MAX_INPUT_SIZE } from './../../limits/index'
+import { BusboyLimits, FieldToPersist } from './../../typings.d'
 
-const KILOBYTE = 1024
-const MEGABYTE = 1024 * KILOBYTE
-const MAX_FILE_SIZE = 100 * MEGABYTE
-
-interface RunArgs {
-  input: Readable
-  runId: string
-}
-
-interface ReqWithRunArgs extends Request {
-  runArgs: RunArgs
+interface ReqWithRunID extends Request {
+  runID: string
 }
 
 interface ReqWithRun extends Request {
-  run: Runner
+  run: Run
 }
 
-const getRunInput = async (inputArr: FileInfo[]): Promise<RunArgs> => {
-  if (inputArr.length === 0) throw new MissingInputField()
-  const runId = inputArr[0].filename
-  return {
-    runId,
-    input: await createRunnerReadStream(runId, 'in'),
-  }
-}
-
-export const parseInput = async (req: ReqWithRunArgs, res: Response, next: NextFunction) => {
+export const parseInput = async (req: ReqWithRunID, res: Response, next: NextFunction) => {
   try {
     if (req.method === 'POST') {
       const limits: BusboyLimits = {
         parts: 1,
-        fileSize: MAX_FILE_SIZE,
+        fileSize: MAX_INPUT_SIZE,
       }
 
       const partsToPersist: FieldToPersist[] = [
         {
           fieldname: 'input',
-          filename: req.params.runId,
+          filename: req.params.runID,
         },
       ]
 
       const inputParser = new InputParser(req, { limits }, getInBasePath(), partsToPersist)
       const inputFileArr = await inputParser.parse()
       Logger.info('[parseInput]', { inputFileArr: util.inspect(inputFileArr) })
-      req.runArgs = await getRunInput(inputFileArr)
+
+      if (inputFileArr.length === 0) throw new MissingInputField()
+      req.runID = inputFileArr[0].filename
       next()
     } else {
       res.status(405).send('This route only accepts POST requests')
@@ -68,13 +53,16 @@ export const parseInput = async (req: ReqWithRunArgs, res: Response, next: NextF
   }
 }
 
-export const runHandler = async (req: ReqWithRunArgs, res: Response, next: NextFunction) => {
+export const runHandler = async (req: ReqWithRunID, res: Response, next: NextFunction) => {
   try {
-    const runExists = Runner.getRun(req.runArgs.runId)
-    if (runExists) throw new RunIdAlreadyExists(req.runArgs.runId)
-    const runRequest = new Runner(req.runArgs)
-    const { startTime } = runRequest.start()
-    res.status(200).send({ startTime, runId: req.runArgs.runId })
+    const { runID } = req
+
+    const runExists = Runner.getRun(runID)
+    if (runExists) throw new RunIDAlreadyExists(runID)
+
+    const run = Runner.createRun(runID)
+    const { startTime } = run.start()
+    res.status(200).send({ startTime, runID })
   } catch (err) {
     next(err)
   }
@@ -82,10 +70,10 @@ export const runHandler = async (req: ReqWithRunArgs, res: Response, next: NextF
 
 export const writeRunOnReq = async (req: ReqWithRun, res: Response, next: NextFunction) => {
   try {
-    const id = req.params.runId
-    const runData = Runner.getRun(id)
-    if (!runData) throw new NoSuchRun(id)
-    req.run = runData.run
+    const { runID } = req.params
+    const run = Runner.getRun(runID)
+    if (!run) throw new NoSuchRun(runID)
+    req.run = run
     next()
   } catch (err) {
     next(err)
@@ -98,8 +86,8 @@ export const statusHandler = async (req: ReqWithRun, res: Response, next: NextFu
       Logger.info('status', req.run.getStatus())
       res.status(200).send(req.run.getStatus())
     } else if (req.method === 'DELETE') {
-      req.run.cleanup()
-      const ret = { deletedProcess: req.run.getId() }
+      Runner.removeRun(req.run.getID())
+      const ret = { deletedRun: req.run.getID() }
       res.status(200).send(ret)
     } else {
       res.status(405).send('This route only accepts GET and DELETE requests')
@@ -112,10 +100,11 @@ export const statusHandler = async (req: ReqWithRun, res: Response, next: NextFu
 export const resultHandler = async (req: ReqWithRun, res: Response, next: NextFunction) => {
   try {
     if (req.method === 'GET') {
-      const id = req.run.getId()
-      if (!req.run.isProcessDone()) throw new ProcessNotFinished(id)
-      if (!req.run.isReportReady()) throw new ReportNotReady(id)
-      res.sendFile(getIOPath(id, 'rep'))
+      const { run } = req
+      const runID = run.getID()
+      if (!run.isProcessDone()) throw new ProcessNotFinished(runID)
+      if (!run.isReportReady()) throw new ReportNotReady(runID)
+      res.sendFile(run.getResultPath())
     } else {
       res.status(405).send('This route only accepts GET requests')
     }

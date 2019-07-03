@@ -1,8 +1,8 @@
 import Deque from 'double-ended-queue'
 
 export class QueueBuffer {
-  deque: Deque<string>
-  maxSize: number
+  private deque: Deque<string>
+  private maxSize: number
 
   constructor(maxSize: number) {
     this.maxSize = maxSize
@@ -21,6 +21,10 @@ export class QueueBuffer {
 
   public getSize = () => {
     return this.deque.length
+  }
+
+  public getMaxSize = () => {
+    return this.maxSize
   }
 
   private addChar(char: string) {

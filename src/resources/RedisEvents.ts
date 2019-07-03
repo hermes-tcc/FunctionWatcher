@@ -1,4 +1,5 @@
 import redis from 'redis'
+import { Runner } from './Runner'
 
 const clientMock = {
   quit() {},
@@ -30,15 +31,15 @@ export class RedisEvents {
   }
 
   public static startupSuccess() {
-    this.publish('STARTUP-SUCCESS')
+    this.publish(`STARTUP-SUCCESS [${Runner.getParallelRunsLimit()}]`)
   }
 
   public static startupError() {
     this.publish('STARTUP-ERROR')
   }
 
-  public static runDone(runId: string) {
-    this.publish(`RUN-DONE ${runId}`)
+  public static runDone(runID: string) {
+    this.publish(`RUN-DONE ${runID}`)
   }
 
   public static quit() {
