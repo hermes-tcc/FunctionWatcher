@@ -3,7 +3,7 @@ import morgan from 'morgan'
 import { RedisEvents } from './resources/RedisEvents'
 import { runRoute } from './routes/run/index'
 import { Logger } from './utils/Logger'
-import { prepareHandler } from './utils/runner'
+import { prepareHandler } from './utils/functionHandler'
 
 const server = express()
 server.use(morgan('dev'))
