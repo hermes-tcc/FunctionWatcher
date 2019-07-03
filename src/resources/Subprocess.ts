@@ -5,15 +5,12 @@ import { QueueBuffer } from '../utils/CircularBuffer'
 import { Waiter } from '../utils/CustomPromises'
 import { Logger } from '../utils/Logger'
 
-const KBYTE = 1024
-const MBYTE = 1024 * 1024
-const MAX_QUEUE_BUFFER_SIZE = 10 * KBYTE
-const MAX_OUTPUT_SIZE = 10 * MBYTE
-
 interface SubprocessConstructor {
-  path: string
-  id: string
   args?: string[]
+  id: string
+  maxOutputBufferSize: number
+  maxOutputSize: number
+  path: string
 }
 
 interface SubprocessIO {
@@ -23,6 +20,9 @@ interface SubprocessIO {
 }
 
 export class Subprocess {
+  private maxOutputSize: number
+  private maxOutputBufferSize: number
+
   private path: string
   private args: string[]
   private process: ChildProcess
@@ -38,9 +38,11 @@ export class Subprocess {
 
   private doneProcess: Waiter<any>
 
-  constructor({ path, args, id }: SubprocessConstructor) {
+  constructor({ path, args, id, maxOutputBufferSize, maxOutputSize }: SubprocessConstructor) {
     this.id = id
     this.path = path
+    this.maxOutputBufferSize = maxOutputBufferSize
+    this.maxOutputSize = maxOutputSize
     this.args = args ? args : []
     this.doneProcess = new Waiter()
   }
@@ -106,13 +108,13 @@ export class Subprocess {
 
   private setupOutputBuffer = (outputStream: Writable, stdStream: Readable) => {
     this.outputSize = 0
-    const queueBuffer = new QueueBuffer(MAX_QUEUE_BUFFER_SIZE)
+    const queueBuffer = new QueueBuffer(this.maxOutputBufferSize)
     if (outputStream) stdStream.pipe(outputStream)
     stdStream.on('data', (data: Buffer) => {
       const str = data.toString('utf-8')
       this.outputSize += str.length
-      if (this.outputSize > MAX_OUTPUT_SIZE && this.runError == null) {
-        this.runError = new MaxOutputSizeReached(MAX_OUTPUT_SIZE)
+      if (this.outputSize > this.maxOutputSize && this.runError == null) {
+        this.runError = new MaxOutputSizeReached(this.maxOutputSize)
         this.process.emit('error', this.runError)
         if (outputStream) stdStream.unpipe(outputStream)
         this.kill()
