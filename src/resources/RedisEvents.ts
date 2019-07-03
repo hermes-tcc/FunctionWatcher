@@ -38,8 +38,8 @@ export class RedisEvents {
     this.publish('STARTUP-ERROR')
   }
 
-  public static runDone(runId: string) {
-    this.publish(`RUN-DONE ${runId}`)
+  public static runDone(runID: string) {
+    this.publish(`RUN-DONE ${runID}`)
   }
 
   public static quit() {
