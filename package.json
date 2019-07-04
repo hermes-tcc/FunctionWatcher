@@ -7,8 +7,8 @@
     "build-ts": "yarn tsc",
     "watch-ts": "yarn tsc -w",
     "tslint": "tslint -c tslint.json 'src/**/*.ts'",
-    "start": "yarn tsc && node --trace-warnings build/server.js",
-    "start:prod": "node server.js",
+    "start": "yarn tsc && node --trace-warnings build/index.js",
+    "start:prod": "node index.js",
     "test": "jest"
   },
   "dependencies": {
@@ -46,12 +46,12 @@
   },
   "jest": {
     "roots": [
-      "<rootDir>/src"
+      "<rootDir>/tests"
     ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
-    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+    "testRegex": "(/tests/.*|(\\.|/)(test|spec))\\.tsx?$",
     "moduleFileExtensions": [
       "ts",
       "tsx",

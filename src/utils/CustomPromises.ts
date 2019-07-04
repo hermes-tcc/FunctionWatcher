@@ -62,10 +62,18 @@ export class Waiter<T> {
 export class TimedWaiter<T> extends Waiter<T> {
   constructor(ms: number, executor?: Executor<T>) {
     super((resolve, reject) => {
-      setTimeout(() => {
-        reject(new TimeoutError())
-      }, ms)
       if (executor) executor(resolve, reject)
     })
+
+    let timer: NodeJS.Timeout
+    const clear = () => {
+      clearTimeout(timer)
+    }
+
+    this.then(clear, clear)
+
+    timer = setTimeout(() => {
+      this.reject(new TimeoutError())
+    }, ms)
   }
 }
