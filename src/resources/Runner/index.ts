@@ -1,6 +1,7 @@
 import R from 'ramda'
 import { RunsLimitReached } from '../../errors/RunRouteErrors'
 import { Logger } from '../../utils/Logger'
+import { WatcherServer } from './../../WatcherServer'
 import { Run } from './Run'
 
 export class Runner {
@@ -42,6 +43,7 @@ export class Runner {
       throw new RunsLimitReached(Runner.PARALLEL_RUNS_LIMIT)
     }
 
+    WatcherServer.stopTimer()
     Runner.curRuns += 1
     const onError = () => {
       Runner.curRuns -= 1
@@ -55,7 +57,6 @@ export class Runner {
 
     const run = new Run({
       runID,
-
       onError,
       onSuccess,
     })
@@ -70,6 +71,7 @@ export class Runner {
     run.setDeleted()
     await run.cleanup()
     Runner.runs = Runner.runs.filter(el => el.getID() !== runID)
+    if (Runner.runs.length === 0) WatcherServer.startTimer()
     return run
   }
 }
