@@ -23,6 +23,11 @@ export class WatcherServer {
     clearTimeout(WatcherServer.timer)
   }
 
+  public static resetTimer = () => {
+    WatcherServer.stopTimer()
+    WatcherServer.startTimer()
+  }
+
   public static shutdown = async () => {
     WatcherServer.stopTimer()
     Logger.info('[WatcherServer] Shutting down')
