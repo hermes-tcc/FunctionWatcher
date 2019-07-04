@@ -1,5 +1,4 @@
 import { Server } from 'http'
-import { MAX_IDLE_TIME } from './limits/index'
 import { RedisEvents } from './resources/RedisEvents'
 import { serverProto } from './serverProto'
 import { prepareHandler } from './utils/functionHandler'
@@ -7,29 +6,12 @@ import { Logger } from './utils/Logger'
 
 export class WatcherServer {
   private static server: Server
-  private static timer: NodeJS.Timeout
 
   public static setServer = (server: Server) => {
     WatcherServer.server = server
   }
 
-  public static startTimer = () => {
-    Logger.info('[WatcherServer] Start timer')
-    WatcherServer.timer = setTimeout(WatcherServer.shutdown, MAX_IDLE_TIME)
-  }
-
-  public static stopTimer = () => {
-    Logger.info('[WatcherServer] Stop timer')
-    clearTimeout(WatcherServer.timer)
-  }
-
-  public static resetTimer = () => {
-    WatcherServer.stopTimer()
-    WatcherServer.startTimer()
-  }
-
   public static shutdown = async () => {
-    WatcherServer.stopTimer()
     Logger.info('[WatcherServer] Shutting down')
     WatcherServer.server.close(err => {
       if (err) {
@@ -49,7 +31,6 @@ export class WatcherServer {
         serverProto.listen(PORT, () => {
           Logger.info(`Server listening on port http://localhost:${PORT}`)
           RedisEvents.startupSuccess()
-          WatcherServer.startTimer()
         })
       )
     } catch (err) {

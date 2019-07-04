@@ -5,5 +5,4 @@ export const aliveRouter = Router()
 
 aliveRouter.use('/', (req, res, next) => {
   res.status(200).end()
-  WatcherServer.resetTimer()
 })
