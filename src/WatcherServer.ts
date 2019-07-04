@@ -24,6 +24,7 @@ export class WatcherServer {
   }
 
   public static shutdown = async () => {
+    WatcherServer.stopTimer()
     Logger.info('[WatcherServer] Shutting down')
     WatcherServer.server.close(err => {
       if (err) {
