@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from 'express'
 import morgan from 'morgan'
+import { aliveRouter } from './routes/alive'
 import { runRoute } from './routes/run/index'
 import { shutdownRoute } from './routes/shutdown'
 import { Logger } from './utils/Logger'
@@ -9,6 +10,7 @@ const serverProto = express()
 serverProto.use(morgan('dev'))
 serverProto.use('/run', runRoute)
 serverProto.use('/shutdown', shutdownRoute)
+serverProto.use('/alive', aliveRouter)
 
 serverProto.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (!err.getStatusCode) err.getStatusCode = () => 500
