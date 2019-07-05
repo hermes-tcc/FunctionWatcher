@@ -1,4 +1,5 @@
 import { Server } from 'http'
+import wtfnode from 'wtfnode'
 import { RedisEvents } from './resources/RedisEvents'
 import { serverProto } from './serverProto'
 import { prepareHandler } from './utils/functionHandler'
@@ -20,6 +21,7 @@ export class WatcherServer {
       }
 
       Logger.info('[WatcherServer] Server closed')
+      wtfnode.dump()
     })
   }
 
