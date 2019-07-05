@@ -14,13 +14,14 @@ export class WatcherServer {
 
   public static shutdown = async () => {
     Logger.info('[WatcherServer] Shutting down')
-    WatcherServer.server.close(err => {
+    WatcherServer.server.close(async err => {
       if (err) {
         Logger.info(`[WatcherServer] Server close error`, err)
         return process.exit(1)
       }
 
       Logger.info('[WatcherServer] Server closed')
+      await RedisEvents.shutdown()
       wtfnode.dump()
     })
   }
