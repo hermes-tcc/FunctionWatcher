@@ -104,7 +104,10 @@ export const resultHandler = async (req: ReqWithRun, res: Response, next: NextFu
       const runID = run.getID()
       if (!run.isProcessDone()) throw new ProcessNotFinished(runID)
       if (!run.isReportReady()) throw new ReportNotReady(runID)
-      res.sendFile(run.getResultPath())
+      res.sendFile(run.getResultPath(), err => {
+        if (err) Logger.error('Error sending file', err)
+        else Logger.info('Done sending file')
+      })
     } else {
       res.status(405).send('This route only accepts GET requests')
     }
