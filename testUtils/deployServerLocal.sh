@@ -1,5 +1,5 @@
 display_usage() { 
-  echo -e "\nUsage: ./deployServerLocal FN_PATH\n" 
+  echo -e "\nUsage: ./deployServerLocal FN_PATH NODE_ENV\n" 
 } 
 
 if [  $# -le 0 ] 
@@ -7,6 +7,12 @@ then
   display_usage
   exit 1
 fi 
+
+if [ -z "$2" ]; then
+ NODE_ENV='development'
+else
+ NODE_ENV="$2"
+fi
 
 set -euo pipefail
 
@@ -24,8 +30,8 @@ echo ""
 echo ""
 
 echo "======== BUILDING WATCHER ========"
-docker build  -t tiagonapoli/watcher-$FN_NAME \
-              --target=development \
+docker build  -t tiagonapoli/watcher-$FN_NAME:latest \
+              --target="$NODE_ENV" \
               --build-arg FN_IMAGE=tiagonapoli/build-$FN_NAME \
               --build-arg FN_LANGUAGE=$LANGUAGE \
               ../
@@ -37,11 +43,24 @@ cd ../
 SRC_PATH="$(pwd)"
 cd testUtils
 
+docker images tiagonapoli/watcher-$FN_NAME:latest
+echo ""
+echo ""
+
+docker history tiagonapoli/watcher-$FN_NAME:latest
+echo ""
+echo ""
+
+MOUNT="--mount type=bind,source=$SRC_PATH,target=/app/server"
+if [ "$NODE_ENV" == "production" ]; then
+  MOUNT=""
+fi
+
 docker run -it --rm \
   -p 8888:8888 \
   -e PORT=8888 \
   -e DEBUG=true \
   -e REDIS_CHANNEL=debug-channel \
   --name=$FN_NAME-test-watcher \
-  --mount type=bind,source=$SRC_PATH,target=/app/server \
+  $MOUNT \
   tiagonapoli/watcher-$FN_NAME

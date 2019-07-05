@@ -23,7 +23,7 @@ FROM common as development
 
 ENV NODE_ENV=development
 
-RUN yarn
+RUN yarn && yarn cache clean
 
 COPY . .
 
@@ -37,7 +37,7 @@ FROM common as production-base
 
 ENV NODE_ENV=development
 
-RUN yarn
+RUN yarn && yarn cache clean
 
 COPY . .
 
@@ -49,9 +49,15 @@ FROM common as production
 
 ENV NODE_ENV=production
 
-RUN yarn
+RUN yarn --production && \
+  yarn autoclean --init && \
+  echo *.ts >> .yarnclean && \
+  echo *.ts.map >> .yarnclean && \
+  echo *.spec.* >> .yarnclean && \
+  yarn autoclean --force && \
+  yarn cache clean
 
-COPY --from=production-base /app/server/build /app/server
+COPY --from=production-base /app/server/build .
 
 COPY --from=function /function /app/function
 
