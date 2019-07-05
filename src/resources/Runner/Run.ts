@@ -76,6 +76,8 @@ export class Run {
       status: this.status,
       ...(this.runError != null ? { error: getErrorString(this.runError) } : {}),
       runningTime: timeDiff(this.startTime, this.endTime || moment()),
+      startTime: this.startTime || null,
+      ...(this.endTime != null ? { endTime: this.endTime } : {}),
       out: this.process.getOut(),
       err: this.process.getErr(),
     }
