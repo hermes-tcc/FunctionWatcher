@@ -21,7 +21,8 @@
     "on-finished": "^2.3.0",
     "ramda": "^0.26.1",
     "redis": "^2.8.0",
-    "winston": "^3.2.1"
+    "winston": "^3.2.1",
+    "wtfnode": "^0.8.0"
   },
   "devDependencies": {
     "@types/busboy": "^0.2.3",
@@ -35,6 +36,7 @@
     "@types/ramda": "^0.26.9",
     "@types/redis": "^2.8.13",
     "@types/winston": "^2.4.4",
+    "@types/wtfnode": "^0.7.0",
     "jest": "^24.7.1",
     "nodemon": "^1.19.0",
     "prettier": "^1.17.0",
