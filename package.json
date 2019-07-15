@@ -1,16 +1,28 @@
 {
   "name": "function-watcher",
   "version": "0.0.1",
-  "main": "index.js",
-  "license": "MIT",
   "scripts": {
-    "build-ts": "yarn tsc",
-    "watch-ts": "yarn tsc -w",
-    "tslint": "tslint -c tslint.json 'src/**/*.ts'",
-    "start": "yarn tsc && node --trace-warnings build/index.js",
+    "start": "yarn build && node --trace-warnings build/index.js",
     "start:prod": "node index.js",
-    "test": "jest"
+    "test": "jest --logHeapUsage",
+    "build": "rm -rf build && yarn tsc",
+    "prepare": "yarn build",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
+    "format": "prettier --config ./prettier.config.js --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "preversion": "yarn lint && yarn format",
+    "version": "git add --all",
+    "postversion": "git push && git push --tags"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hermes-serverless/function-watcher.git"
+  },
+  "author": "Tiago Nápoli <napoli.tiago96@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hermes-serverless/function-watcher/issues"
+  },
+  "homepage": "https://github.com/hermes-serverless/function-watcher#readme",
   "dependencies": {
     "busboy": "^0.3.1",
     "colors": "^1.3.3",
@@ -45,22 +57,5 @@
     "tslint-config-airbnb": "^5.11.1",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.4.4"
-  },
-  "jest": {
-    "roots": [
-      "<rootDir>/tests"
-    ],
-    "transform": {
-      "^.+\\.tsx?$": "ts-jest"
-    },
-    "testRegex": "(/tests/.*|(\\.|/)(test|spec))\\.tsx?$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ]
   }
 }
