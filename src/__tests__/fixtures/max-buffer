@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+'use strict'
+
+let input = ''
+process.stdin.on('data', data => {
+  input += data.toString()
+})
+
+process.stdin.on('end', () => {
+  const [output, bytes] = input.split(' ')
+  if (output === 'stdout') console.log('.'.repeat(Number(bytes)))
+  else console.error('.'.repeat(Number(bytes)))
+})
