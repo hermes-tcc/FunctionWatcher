@@ -1,3 +1,1 @@
-FROM alpine:latest
-
-RUN apk add --no-cache nodejs yarn
+FROM mhart/alpine-node:12
