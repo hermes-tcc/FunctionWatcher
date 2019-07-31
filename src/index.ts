@@ -5,4 +5,5 @@ process.on('exit', code => {
   Logger.info(`About to exit with code: ${code}`)
 })
 
+Logger.enabled = true
 WatcherServer.start()
