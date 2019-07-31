@@ -5,9 +5,7 @@ import { InvalidHandler } from '../errors/RunnerErrors'
 
 export const getHandlerPath = () => {
   const functionPath = path.join('/', 'app', 'function')
-  const hermesConf = JSON.parse(
-    fs.readFileSync(path.join(functionPath, 'hermes.config.json'), { encoding: 'utf-8' })
-  )
+  const hermesConf = JSON.parse(fs.readFileSync(path.join(functionPath, 'hermes.config.json'), { encoding: 'utf-8' }))
   return path.join(functionPath, hermesConf.handler)
 }
 
