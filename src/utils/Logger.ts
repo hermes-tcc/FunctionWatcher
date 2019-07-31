@@ -29,17 +29,21 @@ const myFormat = format.combine(
 )
 
 export class Logger {
+  public static enabled: boolean = true
+
   static logger = createLogger({
     format: myFormat,
     transports: [new transports.Console()],
   })
 
   static info(...args: any) {
+    if (!Logger.enabled) return
     // @ts-ignore
     Logger.logger.info(...args)
   }
 
   static error(...args: any) {
+    if (!Logger.enabled) return
     // @ts-ignore
     Logger.logger.error(...args)
   }
