@@ -1,5 +1,5 @@
+import { Waiter } from '@hermes-serverless/custom-promises'
 import redis from 'redis'
-import { Waiter } from '../utils/CustomPromises'
 import { Logger } from '../utils/Logger'
 import { Runner } from './Runner'
 
@@ -35,7 +35,7 @@ export class RedisEvents {
   }
 
   public static startupSuccess = () => {
-    RedisEvents.publish(`STARTUP-SUCCESS [${Runner.getParallelRunsLimit()}]`)
+    RedisEvents.publish(`STARTUP-SUCCESS [${Runner.parallelRunsLimit}]`)
   }
 
   public static startupError = () => {
