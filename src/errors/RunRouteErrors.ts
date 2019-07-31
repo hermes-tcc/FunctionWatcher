@@ -36,32 +36,12 @@ export class ProcessNotFinished extends RouteError {
   }
 }
 
-export class ReportNotReady extends RouteError {
-  constructor(runID: string) {
-    super({
-      errorName: 'ReportNotReady',
-      message: `The report for run ${runID} is not ready yet`,
-      statusCode: 409,
-    })
-  }
-}
-
 export class RunsLimitReached extends RouteError {
   constructor(limit: number) {
     super({
       errorName: 'RunsLimitReached',
       message: `Runs limit[${limit}] reached for this server`,
       statusCode: 400,
-    })
-  }
-}
-
-export class RunBeingDeleted extends RouteError {
-  constructor(id: string) {
-    super({
-      errorName: 'RunBeingDeleted',
-      message: `Run ${id} is in delete process`,
-      statusCode: 409,
     })
   }
 }
