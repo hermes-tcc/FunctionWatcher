@@ -1,10 +1,21 @@
-import { parseInput, runHandler, statusHandler, resultHandler, writeRunOnReq } from './handlers'
 import { Router } from 'express'
+import {
+  deleteHandler,
+  killHandler,
+  resultInfoHandler,
+  resultOutputHandler,
+  statusHandler,
+  writeRunOnReq,
+} from './handlers'
+import { syncRunHandler } from './syncRun'
+import { asyncRunHandler } from './asyncRun'
 
 export const runRoute = Router()
 
-runRoute.post('/:runID', [parseInput, runHandler])
-runRoute.get('/:runID', [writeRunOnReq, statusHandler])
-runRoute.delete('/:runID', [writeRunOnReq, statusHandler])
-
-runRoute.all('/:runID/result', [writeRunOnReq, resultHandler])
+runRoute.post('/async', [asyncRunHandler])
+runRoute.all('/sync', [syncRunHandler])
+runRoute.all('/:runID/kill', [writeRunOnReq, killHandler])
+runRoute.all('/:runID/status', [writeRunOnReq, statusHandler])
+runRoute.all('/:runID/delete', [writeRunOnReq, deleteHandler])
+runRoute.all('/:runID/result/output', [writeRunOnReq, resultOutputHandler])
+runRoute.all('/:runID/result/info', [writeRunOnReq, resultInfoHandler])

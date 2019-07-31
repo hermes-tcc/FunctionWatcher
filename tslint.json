@@ -4,6 +4,7 @@
     "align": false,
     "import-name": false,
     "prefer-template": false,
-    "function-name": false
+    "function-name": false,
+    "variable-name": false
   }
 }

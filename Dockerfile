@@ -9,9 +9,7 @@ FROM hermeshub/watcher-base-${FN_LANGUAGE} as common
 RUN mkdir -p /app/server && \
   mkdir -p /app/function && \
   mkdir -p /app/io/in && \
-  mkdir -p /app/io/out && \
-  mkdir -p /app/io/err && \
-  mkdir -p /app/io/rep
+  mkdir -p /app/io/all
 
 WORKDIR /app/server
 

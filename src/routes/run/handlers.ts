@@ -1,72 +1,9 @@
-import { NextFunction, Request, Response } from 'express'
-import util from 'util'
-import { InputParser } from '../../resources/InputParser'
+import { NextFunction, Response } from 'express'
+import R from 'ramda'
 import { Runner } from '../../resources/Runner'
-import { Run } from '../../resources/Runner/Run'
-import { getInBasePath } from '../../resources/Runner/RunFileManager'
+import { ReqWithRun } from '../../typings'
 import { Logger } from '../../utils/Logger'
-import {
-  MissingInputField,
-  NoSuchRun,
-  ProcessNotFinished,
-  ReportNotReady,
-  RunIDAlreadyExists,
-} from './../../errors/RunRouteErrors'
-import { MAX_INPUT_SIZE } from './../../limits/index'
-import { BusboyLimits, FieldToPersist } from './../../typings.d'
-
-interface ReqWithRunID extends Request {
-  runID: string
-}
-
-interface ReqWithRun extends Request {
-  run: Run
-}
-
-export const parseInput = async (req: ReqWithRunID, res: Response, next: NextFunction) => {
-  try {
-    if (req.method === 'POST') {
-      const limits: BusboyLimits = {
-        parts: 1,
-        fileSize: MAX_INPUT_SIZE,
-      }
-
-      const partsToPersist: FieldToPersist[] = [
-        {
-          fieldname: 'input',
-          filename: req.params.runID,
-        },
-      ]
-
-      const inputParser = new InputParser(req, { limits }, getInBasePath(), partsToPersist)
-      const inputFileArr = await inputParser.parse()
-      Logger.info('[parseInput]', { inputFileArr: util.inspect(inputFileArr) })
-
-      if (inputFileArr.length === 0) throw new MissingInputField()
-      req.runID = inputFileArr[0].filename
-      next()
-    } else {
-      res.status(405).send('This route only accepts POST requests')
-    }
-  } catch (err) {
-    next(err)
-  }
-}
-
-export const runHandler = async (req: ReqWithRunID, res: Response, next: NextFunction) => {
-  try {
-    const { runID } = req
-
-    const runExists = Runner.getRun(runID)
-    if (runExists) throw new RunIDAlreadyExists(runID)
-
-    const run = Runner.createRun(runID)
-    const { startTime } = run.start()
-    res.status(200).send({ startTime, runID })
-  } catch (err) {
-    next(err)
-  }
-}
+import { NoSuchRun, ProcessNotFinished } from './../../errors/RunRouteErrors'
 
 export const writeRunOnReq = async (req: ReqWithRun, res: Response, next: NextFunction) => {
   try {
@@ -80,14 +17,11 @@ export const writeRunOnReq = async (req: ReqWithRun, res: Response, next: NextFu
   }
 }
 
-export const statusHandler = async (req: ReqWithRun, res: Response, next: NextFunction) => {
+export const deleteHandler = async (req: ReqWithRun, res: Response, next: NextFunction) => {
   try {
-    if (req.method === 'GET') {
-      Logger.info('status', req.run.getStatus())
-      res.status(200).send(req.run.getStatus())
-    } else if (req.method === 'DELETE') {
-      Runner.removeRun(req.run.getID())
-      const ret = { deletedRun: req.run.getID() }
+    if (req.method === 'DELETE') {
+      Runner.removeRun(req.run.runID)
+      const ret = { deletedRun: req.run.runID }
       res.status(200).send(ret)
     } else {
       res.status(405).send('This route only accepts GET and DELETE requests')
@@ -97,19 +31,59 @@ export const statusHandler = async (req: ReqWithRun, res: Response, next: NextFu
   }
 }
 
-export const resultHandler = async (req: ReqWithRun, res: Response, next: NextFunction) => {
+export const statusHandler = async (req: ReqWithRun, res: Response, next: NextFunction) => {
   try {
     if (req.method === 'GET') {
-      const { run } = req
-      const runID = run.getID()
-      if (!run.isProcessDone()) throw new ProcessNotFinished(runID)
-      if (!run.isReportReady()) throw new ReportNotReady(runID)
-      res.sendFile(run.getResultPath(), err => {
-        if (err) Logger.error('Error sending file', err)
-        else Logger.info('Done sending file')
-      })
+      Logger.info('[StatusHandler]', req.run.getStatus())
+      const which = R.toPairs(req.query).map(el => el[1]) as string[]
+      const status = which.length > 0 ? req.run.getStatus(which) : req.run.getStatus()
+      res.status(200).send(status)
     } else {
       res.status(405).send('This route only accepts GET requests')
+    }
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const killHandler = async (req: ReqWithRun, res: Response, next: NextFunction) => {
+  try {
+    if (req.method === 'POST') {
+      Logger.info(`[killHandler] ${req.run.runID}`)
+      req.run.kill()
+      res.status(200).send()
+    } else {
+      res.status(405).send('This route only accepts POST requests')
+    }
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const resultInfoHandler = async (req: ReqWithRun, res: Response, next: NextFunction) => {
+  try {
+    if (req.method === 'GET') {
+      Logger.info('[ResultInfoHandler]', req.run.getStatus())
+      if (!req.run.isProcessDone) throw new ProcessNotFinished(req.run.runID)
+      res.status(200).send(req.run.getStatus())
+    } else {
+      res.status(405).send('This route only accepts GET and DELETE requests')
+    }
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const resultOutputHandler = async (req: ReqWithRun, res: Response, next: NextFunction) => {
+  try {
+    if (req.method === 'GET') {
+      Logger.info('[ResultOutputHandler]', req.run.getStatus())
+      if (!req.run.isProcessDone) throw new ProcessNotFinished(req.run.runID)
+      res.status(200)
+      const fileStream = await req.run.outputStream
+      fileStream.pipe(res)
+    } else {
+      res.status(405).send('This route only accepts GET and DELETE requests')
     }
   } catch (err) {
     next(err)

@@ -1,20 +1,28 @@
-display_usage() { 
-  echo -e "\nUsage: ./deployServerLocal FN_PATH NODE_ENV\n" 
-} 
+set -euo pipefail
 
+display_info() {
+  printf "Usage ./start.sh [OPT] FN_PATH\nOptions are:\n"
+  printf "  -h: Show this message\n"
+  printf "  -p: Production node environment\n"
+  exit 0
+}
+
+NODE_ENV='development'
+while getopts "ph" OPT; do
+  case "$OPT" in
+    "p") NODE_ENV='production';;
+    "h") display_info;;
+    "?") display_info;;
+  esac 
+done
+
+
+shift $((OPTIND - 1)) 
 if [  $# -le 0 ] 
 then 
   display_usage
   exit 1
 fi 
-
-if [ -z "$2" ]; then
- NODE_ENV='development'
-else
- NODE_ENV="$2"
-fi
-
-set -euo pipefail
 
 HERMES_CONFIG_PATH="$1/hermes.config.json"
 FN_NAME=$( cat $HERMES_CONFIG_PATH | python -c "import json,sys;obj=json.load(sys.stdin);print obj['functionName'];")

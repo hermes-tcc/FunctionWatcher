@@ -1,24 +1,6 @@
-export interface ReadableWithTruncatedFlag extends NodeJS.ReadableStream {
-  truncated?: boolean
-}
+import { Request } from 'express'
+import { Run } from './resources/Runner/Run'
 
-export interface BusboyLimits {
-  fieldNameSize?: number
-  fieldSize?: number
-  fields?: number
-  fileSize?: number
-  files?: number
-  parts?: number
-  headerPairs?: number
-}
-
-export interface FileInfo {
-  filename: string
-  path: string
-  size: number
-}
-
-export interface FieldToPersist {
-  fieldname: string
-  filename: string
+export interface ReqWithRun extends Request {
+  run: Run
 }

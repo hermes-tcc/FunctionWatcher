@@ -16,12 +16,11 @@ serverProto.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (!err.getStatusCode) err.getStatusCode = () => 500
   if (!err.getResponseObject) {
     err.getResponseObject = () => {
-      return { error: 'InternalServerError', message: 'Something broke in the function server' }
+      return { error: 'InternalServerError', message: `${err.constructor.name} - ${err.message}` }
     }
   }
   Logger.error(`Error ${err.constructor.name}`, err)
   if (err.detail) Logger.info(`Error details`, err.detail)
-  res.setHeader('Connection', 'close')
   res.status(err.getStatusCode()).send(err.getResponseObject())
 })
 
