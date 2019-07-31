@@ -1,7 +1,7 @@
 import R from 'ramda'
 import { RunsLimitReached } from '../../errors/RunRouteErrors'
 import { Logger } from '../../utils/Logger'
-import { WatcherServer } from './../../WatcherServer'
+import { RedisEvents } from '../RedisEvents'
 import { Run } from './Run'
 
 export class Runner {
@@ -11,7 +11,7 @@ export class Runner {
   private static errRuns = 0
   private static runs: Run[] = []
 
-  public static getParallelRunsLimit = () => {
+  public static get parallelRunsLimit() {
     return Runner.PARALLEL_RUNS_LIMIT
   }
 
@@ -19,29 +19,38 @@ export class Runner {
     Runner.PARALLEL_RUNS_LIMIT = newVal
   }
 
-  public static getCurrentRuns = () => {
+  public static get currentRuns() {
     return Runner.curRuns
   }
 
-  public static getSuccessRuns = () => {
+  public static get successRuns() {
     return Runner.succRuns
   }
 
-  public static getErrorRuns = () => {
+  public static get errorRuns() {
     return Runner.errRuns
   }
 
+  public static reset = async () => {
+    for (let i = 0; i < Runner.runs.length; i += 1) {
+      await Runner.removeRun(Runner.runs[i].runID)
+    }
+
+    Runner.curRuns = 0
+    Runner.succRuns = 0
+    Runner.errRuns = 0
+    Runner.runs = []
+  }
+
   public static getRun = (runID: string): Run | null => {
-    const run = R.find(el => el.getID() === runID, Runner.runs)
+    const run = R.find(el => el.runID === runID, Runner.runs)
     if (run == null) return null
     return run
   }
 
   public static createRun = (runID: string) => {
     Logger.info('[Runner] Try to create run', { curRuns: Runner.curRuns })
-    if (Runner.curRuns === Runner.PARALLEL_RUNS_LIMIT) {
-      throw new RunsLimitReached(Runner.PARALLEL_RUNS_LIMIT)
-    }
+    if (Runner.curRuns === Runner.PARALLEL_RUNS_LIMIT) throw new RunsLimitReached(Runner.PARALLEL_RUNS_LIMIT)
 
     Runner.curRuns += 1
     const onError = () => {
@@ -54,10 +63,10 @@ export class Runner {
       Runner.succRuns += 1
     }
 
-    const run = new Run({
-      runID,
+    const run = new Run(runID, {
       onError,
       onSuccess,
+      onDone: RedisEvents.runDone,
     })
 
     Runner.runs.push(run)
@@ -65,11 +74,10 @@ export class Runner {
   }
 
   public static removeRun = async (runID: string) => {
-    const run = R.find(el => el.getID() === runID, Runner.runs)
+    const run = R.find(el => el.runID === runID, Runner.runs)
     if (run == null) return null
-    run.setDeleted()
+    Runner.runs = Runner.runs.filter(el => el.runID !== runID)
     await run.cleanup()
-    Runner.runs = Runner.runs.filter(el => el.getID() !== runID)
     return run
   }
 }
