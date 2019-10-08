@@ -1,6 +1,6 @@
 {
   "name": "function-watcher",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "scripts": {
     "start": "yarn build && node --trace-warnings build/index.js",
     "start:prod": "node index.js",
