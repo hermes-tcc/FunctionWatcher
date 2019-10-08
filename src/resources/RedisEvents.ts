@@ -17,7 +17,7 @@ export class RedisEvents {
     process.env.DEBUG === 'true'
       ? clientMock
       : redis.createClient({
-          host: 'event-broker',
+          host: 'function-lifecycle-broker',
           port: 6379,
         })
 
