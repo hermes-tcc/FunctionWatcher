@@ -1,6 +1,6 @@
 set -euo pipefail
 
-display_info() {
+display_usage() {
   printf "Usage ./start.sh [OPT] FN_PATH\nOptions are:\n"
   printf "  -h: Show this message\n"
   printf "  -p: Production node environment\n"
@@ -28,6 +28,15 @@ HERMES_CONFIG_PATH="$1/hermes.config.json"
 FN_NAME=$( cat $HERMES_CONFIG_PATH | python -c "import json,sys;obj=json.load(sys.stdin);print obj['functionName'];")
 LANGUAGE=$( cat $HERMES_CONFIG_PATH | python -c "import json,sys;obj=json.load(sys.stdin);print obj['language'];")
 FN_BUILDER_DOCKERFILE=$( curl https://raw.githubusercontent.com/hermes-tcc/project-building-base-images/master/$LANGUAGE.Dockerfile )
+
+echo "======== BUILDING DEVELOPMENT IMAGE ========"
+docker build  -t hermeshub/watcher-dev-$LANGUAGE:latest \
+              --target="development" \
+              --build-arg FN_LANGUAGE=$LANGUAGE \
+              -f ../watcher.Dockerfile \
+              ../
+echo ""
+echo ""
 
 echo "======== BUILDING FUNCTION ========"
 echo "$FN_BUILDER_DOCKERFILE" | \
